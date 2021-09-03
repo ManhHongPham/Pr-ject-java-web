@@ -1,0 +1,658 @@
+---------------------------PROCEDURE TO BUILD PROJECT WEBSITE ECOMMERCE-----------------
+
+---------------Steps 1: configure maven
+(supporting library managament and packaging app, maven can manage version,
+dependencies(librarys use in project, manage building, auto download javadoc and source)
+
+-establish java jdk latest version( java home, variable enviroment( jdk include file bin), configure system not user)
+-establish maven ( integrate maven in eclipse)
+	+ window->preferences->maven->installation> add-> select folder maven include file bin
+	
+---------------steps 2: configure java
+-install jdk( jdk is a version for a developer, jre is a version for client, jdk combine jre)
+-establish jdk( add->stand vm->jre home (select file jdk include file bin)->directory->apply)
+-establish jdk in ecclipse window->references->java->installes jres->execuate enviroment(version jdk is using)->apply
+
+--------------steps 3: create maven project
+-catalogs (format type project)
+-create maven project for web 
+(org.apache.maven.archatypes maven-archetype-webapp 1.0)
+(com.dragome)
+--------------steps 4: configure file pom.xml
+(maven use file pom.xml to configure, define dependencise, version, repository,...)
+-<version>0.0.1-SNAPSHOT</version> version project is using
+-<packaging>jar<packaging> instead of rar because we use spring boot, its provide tomcat, we don't need to install and more like rar
+
+-we can use syntax like
+<junit.verion>3.8.1</junit.verion>
+<version>${junit.verion}</version>
+
+-when use library, we put it in dependences like junit(find in https://mvnrepository.com/)
+maven access address and download library
+
+-after we select project->maven->update project->force update of snapshots(to maven download libary)
+
+
+1- define use jdk version
+	<properties>
+		<!-- báo maven sử dụng phiên bản jdk nào ? -->
+		<maven.compiler.target>11</maven.compiler.target>
+		<maven.compiler.source>11</maven.compiler.source>
+	</properties>
+
+3- Bổ sung bộ quản lí thư viện spring-boot vào maven project sử dụng thẻ parent của maven
+	
+	<!-- Khai báo project spring-boot -->
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.1.4.RELEASE</version>
+	</parent>
+	
+4- thêm spring tools
+		
+	<!-- SPRING TOOLS tự động chạy không cần sửa -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+		</dependency>
+
+5- khai báo modul 
+	Khai báo start web dependency(spring-boot-starter-web) để khởi tạo một ứng dụng web.
+	each modul have own starter, depending modul we configure starter
+	(
+	<!-- Thêm spring mvc vào trong maven project thông qua spring-boot -->
+		<!-- SPRING MVC -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>  <!-- phải có starter-web bao gồm cả mvc, không cần phải add thêm startrt 
+				mvc -->
+		</dependency>
+	)
+6-thêm view engine để starter
+
+	<!-- VIEW ENGINE PARSER JSP FILE -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jstl</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>taglibs</groupId>
+			<artifactId>standard</artifactId>
+			<version>1.1.2</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-jasper</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>30.1-jre</version>
+		</dependency>
+
+7- phải luôn luôn biên dịch trước khi sử dụng vì nó sẽ chỉ đặt bất cứ thứ gì vào "mục tiêu / lớp" trong JAR. 
+Điều này sẽ đảm bảo rằng JAR bao gồm mọi thay đổi bạn đã thực hiện gần đây đối với mã nguồn. 
+Vì vậy, bạn nên làm một cái gì đó như : mvn clean compile assembly:single
+	
+	<!-- mvn clean compile assembly:single -->
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>Homework.JW12.Day23</mainClass>
+						</manifest>
+					</archive>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+			</plugin>
+
+
+
+------------------steps 5: oganize by model MVC------------------------------------
+
+
+client gửi request lên controller thông qua broswer, request đc bắt bởi controller, nếu bắt đc
+if cần use data from model thông qua model map, gửi về view thông qua view engine, tích hợp vs data
+trả lại client, nếu khong đc requestmapping(post or get) trả về json 404(not found)
+Note: need annotation for java understand
+
+1-create springBootMain (SpringBootMain- cần @SpringBootApplication)
+
+		/**
+ 		* Entrypoint cho Spring-Boot(Là class phải chứa @SpringBootApplication)
+ 		* Spring-boot sẽ sử dụng class này để chạy.
+ 		*/
+		@SpringBootApplication
+		public class SpringBootMain {
+			public static void main(String[] args) {
+		SpringApplication.run(SpringBootMain.class, args);
+		}
+		}
+
+2- create controller manage request(get or post)
+NOTE: FILES CONTROLLER must have annotaion @Controller
+	Homecontroller- 
+		
+		/**
+	 	* @param model    - Dùng để đẩy dữ liệu hoặc hứng dữ liệu từ tầng VIEW.
+	 	* @param request  - Các thông tin người dùng yêu cầu.
+	 	* @param response
+	 	* @return
+	 	* @throws Exception
+	 	*/
+		@RequestMapping(value = { "/home", "/index", "/trangchu" }, method = RequestMethod.GET)
+		public String index(final ModelMap model, final HttpServletRequest request, final HttpServletResponse response)
+			throws Exception {
+		return "front-end/index";
+	
+3- create file jsp
+NoTE: 
+-NẾU FILE HTML HIỂN THỊ BỊ LỖI FRONT CHỮ
+	 <!-- sử dụng tiếng việt, tàu,... -->
+		<%@ page language="java" contentType="text/html; charset=utf-8"
+		pageEncoding="utf-8"%>
+	
+	-tạo file common để bóc tách từng thành phần chung của all of file
+
+		thay phần chung ở trang cũ bằng <jsp:include page="/WEB-INF/views/front-end/common/css.jsp"></jsp:include> 
+	
+	-link ở phần js,css
+
+		c1: để bình thường
+		c2: <link rel="stylesheet" href="http://127.0.0.1:8080/assets/css/style.css">
+		c3: 
+		thêm jstl vào common bằng cách tạo 1 file variable.jsp
+			<!-- JSTL -->
+				<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+				<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+				<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+
+			<!-- định nghĩa biến -->
+			<c:set var="base" value="${pageContext.servletContext.contextPath}"></c:set>
+
+		change link css,js like
+		from ---<link rel="stylesheet" href="${pageContext.servletContext.contextPath}/assets/css/bootstrap.min.css">
+		to ---<link rel="stylesheet" type="text/css" href="${base}/assets/css/style.css">
+		
+		after file jsp phải có đường dẫn của file variable: <jsp:include page="variable.jsp"></jsp:include>
+
+
+	-tất cả các link trong file html liên kiết vs nhau http://127.0.0.1:8080/index
+
+4- add all files front end in (src/main/webapp/web-inf/views/front-end)
+
+5- create MVCConfigure 
+	
+	MVCConf- 
+		cần có annotation 
+		@Configuration
+		//-> là 1 bean mà spring hiểu được
+		//bean này dùng để cấu hình.
+		
+		// cấu hình cho MVC biết chỗ folder để lấy view trả về cho Browser.
+	
+		@Bean
+		public ViewResolver viewResolver() {
+		InternalResourceViewResolver bean = new InternalResourceViewResolver();
+		bean.setViewClass(JstlView.class);
+		bean.setPrefix("/WEB-INF/views/"); // thư mục gốc chứa các file jsp.
+		bean.setSuffix(".jsp");		//đuôi file trả vể
+		return bean;
+		}
+		
+		/**
+		* cấu hình các static resources. các file css,images, js,...
+		 */
+		@Override
+		registry.addResourceHandler("/assets/css/**").addResourceLocations("classpath:/assets/css/");
+		
+		registry.addResourceHandler("/assets/js/**").addResourceLocations("classpath:/assets/js/");
+		registry.addResourceHandler("/assets/js/vendor/**").addResourceLocations("classpath:/assets/js/vendor/");
+
+		registry.addResourceHandler("/assets/img/banner/**").addResourceLocations("classpath:/assets/img/banner/");
+
+6- bóc tách các phần chung file jsp
+7- if during execution error port 8080( overlap in the port) we can change as follows
+create file applications.properties (/ArtFurniture/src/main/resources/application.properties)
+
+server.port = 9090
+
+multipart.enabled=true
+
+#logging.level.org.springframework.web.servlet.mvc.method.annotation=TRACE
+#logging.level.org.springframework.boot.actuate.endpoint.web.servlet.WebMvcEndpointHandlerMapping=TRACE
+#spring.mvc.throw-exception-if-no-handler-found=true
+
+
+8- để chuyển các link, hrf, action một cách tương đối ta use file variable.jsp và đầu tất cả các trang phải có đường dẫn của file này
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+
+<c:set var="base" value="${pageContext.servletContext.contextPath}"></c:set>
+<!-- de tranh bi break form link, hrf, action-->
+
+
+
+
+-------------------------------------------POST DATA FROM BROWSER----------------------------------------------
+CÁCH POST: người dùng đẩy data lên qua contact, register(thông tin của khách hàng)
+	
+----------cách 1: use http request, through name
+		+ steps 1: create object need to request(product, infor) is class
+		+ bước 2:  define view, in file jsp have forms contact, register, review.. 
+		         add- action="${pageContext.servletContext.contextPath}/contact"  method="post"
+			is path page returned and method is post
+
+			<input type="text" name="name" id="name" placeholder="Your Name*">
+			all tag input must name, 
+
+		+ bước 2: define contactController
+			+ method get 
+			+ method post define as follows: 
+			------NOTE: 
+			String fullname= request.getParameter("name"); "name" is name of tab input
+		
+		@RequestMapping(value = { "/contact" }, method = RequestMethod.POST)
+		public String contact1(final ModelMap model, final HttpServletRequest request, final HttpServletResponse response)
+			throws Exception {
+		String name = request.getParameter("name"); //tự định nghĩa thông tin so với form
+		System.out.println("contact name: " + name);
+
+		return "front-end/contact"; 
+		}
+
+-----------cách 2: use spring form, wen need use it for creating page admin like(form add product,add st)
+		+ STEPS 1: create obj, include infor in a form
+		+ STEPS 2: define view and convert html form to spring form
+			+ example: in file login.jsp want to using spring form, add taglib và jstl trên đầu file
+			
+			<%@ taglib prefix="sf" uri="http://www.springframework.org/tags/form"%>
+			
+			+ convert html form sang spring form, các thẻ form, input,textarea phải chuyển
+			example:
+			<sf:form method="post" action="http://127.0.0.1:8080/account1"
+				modelAttribute="login">
+				<div class="form-fields">
+					<h2>Login</h2>
+					<p>
+				<label for="login-name" class="important">Username</label>
+				<sf:input path="username" type="text" id="login-name" />
+					</p>
+					<sf:button type="submit" value="submit">Login</sf:button>
+					<label><sf:input path="" />Remember me</label>
+				</div>
+				</sf:form>
+			</div>
+		---add modelAttribute="contact"---is key of modeladtribute in requestcontroller
+		( when load page (GET) check have obj Contact through key "contact" whether or not)
+		
+		----3-in tag input, textarea...
+		add path(atribure) is name property of modeladtribure 
+		(có thì nhập các thuộc tính ở object Contact)
+
+		-STEP 3: config resquestmaping phương thức get và post
+			+ở get 		
+				@RequestMapping(value = { "/account" }, method = RequestMethod.GET)
+				public String account(final ModelMap model, final HttpServletRequest request, final HttpServletResponse response,
+				@ModelAttribute("login") Login login) throws Exception { 
+
+				model.addAttribute("login", new Login()); //check
+		
+				return "front-end/account";
+				}
+
+			+ở post @ModelAttribute("login") Login login
+				@RequestMapping(value = { "/account1" }, method = RequestMethod.POST)
+				public String account1(final ModelMap model, final HttpServletRequest request, final HttpServletResponse response,
+				@ModelAttribute("login") Login login) throws Exception { //(create model(key) with object Contact) 
+
+				System.out.println("username:" + login.getUsername());
+				System.out.println("password:" + login.getPassword());
+
+				return "front-end/account";
+				}
+			
+---------------cách 3: sử dụng ajax (chưa hiểu lắm) -----------use ajax
+don't need form 
+use id
+create hàm
+	-ajax, (khi nhấn- button trang ko restart) 
+	1-define requestmapping (define satus code ở contactcontroller), 
+	2-trả về responeentity là AJAXrespone(class gồm trạng thái và data) đại diện cho mã (thay cho đường đẫn tới view)
+	trong respon cần đối tượng, khi return về respone, sẽ convert về kiểu object jsonresult, trả về javascrip object
+	trong object đó có ajaxrespone
+	file jsp thêm <%@ taglib prefix="sf" uri="http://www.springframework.org/tags/form"%>
+	3-đặt id cho button ở contact, tạo hàm js để call 
+	
+	ajax đẩy data lên json, nhận data về (json là ngôn ngữ javascript) 	
+
+	nhập sản phẩm dùng spring from nhập các thông tin
+	use AJAX nhấn subsride thì thông báo lên
+	
+
+-----------------------DataBase--------------------------------------
+
+	1) thiết kế database sử dụng mysql để làm database tự học
+	2) connect database with controller
+		bước 1: cấu hình file pom.xml
+			add 
+				<!-- SPRING JPA -->
+				<dependency>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-data-jpa</artifactId>
+				</dependency>
+				<dependency>
+					<groupId>mysql</groupId>
+					<artifactId>mysql-connector-java</artifactId>
+				</dependency>	
+
+		bước 2:configure through file java or jpa support configure through application.properties
+			 add file application.properties (/test/src/main/resources/application.properties)
+			
+			multipart.enabled=true
+
+			#logging.level.org.springframework.web.servlet.mvc.method.annotation=TRACE
+			#logging.level.org.springframework.boot.actuate.endpoint.web.servlet.WebMvcEndpointHandlerMapping=TRACE
+			#spring.mvc.throw-exception-if-no-handler-found=true
+
+
+			# Database
+			spring.datasource.url=jdbc:mysql://localhost:3306/artfuniture_class_demo //tên database
+			spring.datasource.username=root	//name
+			spring.datasource.password=manh123456789 //mật khẩu
+			spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+			spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
+
+			spring.jpa.hibernate.ddl-auto=validate // bắt database bằng  cái này thì phải
+
+			spring.jpa.hibernate.show_sql=true
+			spring.jpa.hibernate.format_sql=true 
+	3)-create entities(each entity represents each table in database)
+
+			@Repository annotation có một vai trò đặc biệt dùng để chuyển đổi các database exception sang Spring-based 
+			(Các exception mà Spring có thể hiểu và xử lý được) unchecked exception.
+				
+			thêm gói repository như là kho lưu các quan hệ 1-nhiều, nhiều-nhiều
+			example:
+			 Categories là bên nhiều
+			Integer là số lượng bản ghi
+			@Repository
+			public interface CategoryRepository extends JpaRepository<Categories, Integer>{
+
+			
+			}
+		steps4: note phải có getter-setter cho tất cả các class trong gói entities
+			+ tạo gói entities để kết nối các bảng
+			+ create all entity(class)
+			create class with annotaion @entity
+			can ten bang neu k xe hieu pulic class chinh la ten, nen phai chi ro ten bang
+
+			+tạo class baseEntity để lưu các thuộc tính chung như tạo ngày nào, giờ nào
+					@MappedSuperclass
+						public class BaseEntity {
+								@Id
+								@GeneratedValue(strategy = GenerationType.IDENTITY)
+	
+								@Column(name = "id")
+								private Integer id;
+
+								@Column(name = "status", nullable = true)
+								private Boolean status = Boolean.TRUE;
+			+tạo các bảng còn lại
+				phải có annotation @entity và class phải được extends từ baseentity
+				example: với class categories
+
+				@Entity
+				@Table(name = "tbl_category") //tên phải giống với trong database
+				public class Categories extends BaseEntity {
+				
+				@Column(name = "name", nullable = false)
+				private String name;
+				
+
+----------------------------các quan hệ---------------------------------------
+-----------1-NHIỀU
+example với 1 gói(categories) có nhiều product:
+ở bảng con phải có thêm:
+
+	@ManyToOne(fetch = FetchType.EAGER) //khi lay data se lay data cua category
+	@JoinColumn(name = "category_id") //tên của khóa ngoại
+	private Categories categories;	//class mà khóa khoại hướng tới cùng với tên kết nối
+
+ở bảng cha thêm:
+
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "categories", fetch = FetchType.LAZY) 
+	//khi lay 1 category se khong lay het product
+	//mappedBy là tên để kết nối với bảng con
+	
+	private List<Product> products = new ArrayList<Product>();
+	//list danh sách để 1 danh mục có nhiều sản phẩm
+
+	thêm các  thêm và xóa
+	public void addProduct(Product product) {
+		products.add(product);
+		product.setCategories(this);
+	}
+
+	public void removeProduct(Product product) {
+		products.remove(product);
+		product.setCategories(null);
+	}
+
+-----------------1-NHIEU VỚI CHÍNH NÓ----------
+
+	@OneToMany(fetch = FetchType.EAGER)
+	@JoinColumn(name = "parent_id") 	//PHAI CHI RO KHOA NGOAI
+	private List<Categories> child_categories = new ArrayList<Categories>();
+
+----------------NHIỀU- NHIỀU------------
+
+	vd với bảng role và user, 1 user have roles, 1 role have users
+
+	-----vs bảng role
+	@ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "list_roles")	
+	//mappped list của user
+	private List<Users> list_users = new ArrayList<Users>();	
+	
+	-----với bảng user
+	@ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	
+	@JoinTable(name = "tbl_users_roles", joinColumns = @JoinColumn(name = "user_id"),
+	inverseJoinColumns = @JoinColumn(name = "role_id"))	
+	//chỉ cần 1 trong 2 class cần join table, name là bảng trung gian trong database	
+	private List<Roles> list_roles = new ArrayList<Roles>();
+	
+	cả 2 đều cần phải có add và remove
+
+
+
+
+
+
+
+
+----------------------------------- Save, Edit, Delete, Get data from database-----------------------
+
+--------------------xử lý trang admin----------------------------
+post data into database
+1) tạo form addproduct int page add-product
+example tạo 1 form nhập thông tin của 1 sản phẩm lên database
+
+	bước 1: tạo spring form như bình thường
+		sf:form action="${base}/admin/add_product" method="post"
+			enctype="multipart/form-data" class="form-horizontal"
+			modelAttribute="product">
+			
+			<sf:hidden path="id" />   <!-- dung chung cho việc chỉnh sửa và ad sp, mapping in  -->
+			
+			<div class="col-12 col-md-9">
+				<sf:select path="categories1.id" name="select" id="select" class="form-control">
+					<sf:options items="${categoriesList}" itemValue="id" itemLabel="nameCategory" value="" />
+						<!-- categoriesList tuong ung voi model.addAttribute("categoriesList") o controller categories1 tuong ung voi entity
+														
+				</sf:select>
+			</div>
+
+			<div class="col-12 col-md-9">
+				<input type="file" id="file-input" name="productAvatar" class="form-control-file">
+					<!-- spring boot not support, use http url with property name -->
+						<img class="primary-image" src="/upload/${product.avatar}" alt="">
+			</div>
+
+
+
+	bước 2: configure to upload image, configure productService extentd baseservice to upload or edit product
+
+			step1: create folder "upload" to save image
+			step2: configure MVCconf
+					define: public static String ROOT_UPLOAD_PATH = "D:/Java Web-Devpro/back end/ArtFurniture/ArtFurniture/upload/"; --to save path of folder
+					and: registry.addResourceHandler("/upload/**").addResourceLocations("file:" + ROOT_UPLOAD_PATH);
+
+			step3: create class BaseService is class include methods use for communicating with database
+			step4: define method edit or save product in productService
+		
+	bước 3: tạo addproductController 
+		
+	KHI CHƯA NHẤN LƯU THÌ ĐANG Ở METHOD GET, KHI NHẬP XONG FORM VÀ NHẤN LƯU THÌ CHUYỂN ĐẾN ACTION LÀ POST 
+	
+	@Autowired						
+	private CategoryRepository CategoryRepository; 
+
+	@Autowired
+	ProductRepository ProductRepository;
+//get
+	@RequestMapping(value = { "/admin/add_product" }, method = RequestMethod.GET)
+	public String forms(final ModelMap model, final HttpServletRequest request, final HttpServletResponse response)
+			throws Exception {
+		model.addAttribute("product", new Product());			//khởi tạo một sản phẩm, new kia là ở entities lấy trong csdl, không cần tạo class riêng
+		model.addAttribute("categoriesList", categoryService.findAll()); // khởi tạo để biết product thuộc category nào
+		return "admin/add-product";
+	}
+//post
+	/**
+	 * when user want to save or update product
+	 * 
+	 * @param model
+	 * @param request
+	 * @param response
+	 * @param product		-key of entity product mapping with modeladdtribute in form addproduct
+	 * @param productAvatar	- spring form not support, use httprequest corresponds with name in form
+	 * @param imagesProduct
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = { "/admin/add_product" }, method = RequestMethod.POST)
+	public String detail(final ModelMap model, final HttpServletRequest request, final HttpServletResponse response,
+			@ModelAttribute("product") Product product, 
+			@RequestParam("productAvatar") MultipartFile productAvatar,
+			@RequestParam("imagesProduct") MultipartFile[] imagesProduct) throws Exception {
+		
+		if (product.getId() != null && product.getId() > 0) {
+			productService.edit(product, productAvatar, imagesProduct); //use id when clisk button edit
+		} else {
+			productService.save(product, productAvatar, imagesProduct);
+		}
+		return "redirect:/admin/add_product"; // when finish, return path http://localhost:9090/admin/add_product
+	}
+
+
+	@RequestMapping(value = { "/admin/edit_product" }, method = RequestMethod.GET)
+	public String editProduct(final ModelMap model, final HttpServletRequest request,
+			final HttpServletResponse response) throws Exception {
+
+		int proructId = Integer.parseInt(request.getParameter("id"));
+		Product product = productService.getById(proructId);
+
+		model.addAttribute("categoriesList", categoryService.findAll());
+		model.addAttribute("product", product);
+
+		return "admin/add-product";
+	}
+
+
+2) display product on the page manage product integrate edit and delele
+	
+	step 1: configure controller, define list product use Productservice must autowrired
+		addmodeladdtribute with key is "product" and value is list product to display
+	step 2: in file jsp use tablib c: foreach
+					
+					<c:forEach items="${product}" var="p">
+									<div class="col-xl-3 col-lg-4 col-md-4 col-sm-6 col-xs-12">
+										<div class="product-item">
+											<div class="product-image-hover">
+												<a href="/product-details1?id=${p.id}"> <img class="primary-image"
+													src="${base }/upload/${p.avatar}" alt="">
+												</a>
+												<div class="product-hover">
+													<button>
+														<i class="icon icon-FullShoppingCart"></i>
+													</button>
+													<a href="wishlist.htnl"><i class="icon icon-Heart"></i></a>
+													<a href="wishlist.htnl"><i class="icon icon-Files"></i></a>
+												</div>
+											</div>
+											<div class="product-text">
+												<h4>
+													<a href="/product-details1?id=${p.id}">${p.title }</a>
+												</h4>
+												<div class="product-price">
+													<span>${p.price }</span>
+												</div>
+											</div>
+										</div>
+									</div>
+						</c:forEach>
+
+
+NOTE:
+
+1-	href="/product-details1?id=${p.id}
+	là 1 câu truy vấn khi trỏ chuột vào vị trí sản phẩm test có id đó k và sẽ trả về controller nếu bấm edit,  
+	nếu có thì là edit nếu không là add
+	thông thường nhấn trực tiếp vào addproduct sẽ k truy vấn vì vậy cần hidden id do dùng chung trang addproduct cần chỉ rõ là khi nào add và edit
+	
+2-	hiển thị tiền tệ 
+	step1: sử dụng taglib
+	step2: on page jsp
+
+	<td><fmt:setLocale value="vi_VN" scope="session" /> --tùy theo loại tiền tệ muốn hiển thị
+	<fmt:formatNumber value="${p.price_sale}" type="currency" /></td>
+
+3- 	on page user( /shop, /product-detail,..) when select a product-> display "id" of product (NOTE1)
+	instead, we use "seo" of product, avoid being hacked by other know "id"
+
+	step1: configure file jsp in tag a: href="${base }/product-details1/${p.getSeo()}
+	step2: creat class in package dto to save data( class productSearchModel)
+	step3: configure model service(product service) method "search" through sql query, with parametor productSearchModel 
+	step4: configure in controller like this
+
+@RequestMapping(value = { "/product-details1/{productSeo}", }, method = RequestMethod.GET)
+	public String detail10(final ModelMap model, final HttpServletRequest request, final HttpServletResponse response,
+			@PathVariable("productSeo") String productSeo) throws Exception {
+		
+
+		//display detail product
+		//int productID = Integer.parseInt(request.getParameter("id"));
+		//Product product = productService.getById(productID);
+		
+		
+		ProductSearchModel sm = new ProductSearchModel();
+		sm.setProductSeo(productSeo);
+		
+		List<Product> products = productService.search(sm);
+		model.addAttribute("product", products.get(0));
+		
+		//display list product
+		model.addAttribute("products", productService.findAll());
+		
+		return "user/product-details-1";
+	}
